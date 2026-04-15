@@ -32,67 +32,6 @@ This tool replaces traditional automount approaches (such as autofs in desktop e
 
 ---
 
-## How it works
-
-Each server is monitored independently.
-
-### Online detection
-- If the server responds on port 445, an ONLINE counter increases
-- All configured shares for that server are mounted (if it was to fail, it will try up to 3 times by default) 
-
-### Offline detection
-- If the server is unreachable, an OFFLINE counter increases
-- All shares are unmounted using lazy unmount (if it was to fail, it will try up to 3 times by default)
-
-After either action completes, the system stops acting until state changes again.
-
----
-
-## Configuration
-
-Configuration is defined in:
-
-```
-
-/etc/smb-controller.conf
-
-````
-
-### Structure
-
-- GLOBAL SETTINGS: timing, mount options, base path
-- SERVERS: list of SMB servers with credentials
-- PATHS: mapping of mount points to servers and remote paths
-
-Example:
-
-```bash
-BASEMNT="/srv/M"
-
-CHECK_TIMEOUT=1
-COUNT_MAX=3
-SLEEP=5
-SPAWN_DELAY=0.4
-SERVER_DELAY=0.1
-
-MOUNT_OPTIONS="uid=root,gid=smbmount,file_mode=0770,dir_mode=0770,soft"
-
-SERVERS=(
-  "media-server:192.168.50.10:/etc/samba/media-smb-credentials"
-  "backup-node:192.168.50.11:/etc/samba/backup-smb-credentials"
-)
-
-PATHS=(
-  "mediaHome:${BASEMNT}/mediaHome:/home:media-server"
-  "mediaData:${BASEMNT}/mediaData:/mnt:media-server"
-
-  "backupHome:${BASEMNT}/backupHome:/home:backup-node"
-  "backupData:${BASEMNT}/backupData:/mnt:backup-node"
-)
-```
-
----
-
 ## Quick start
 
 To get started quickly, you can run the installer directly:
@@ -112,6 +51,21 @@ curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/
 chmod +x smb-controller-installer.sh
 ./smb-controller-installer.sh
 ```
+---
+
+## How it works
+
+Each server is monitored independently.
+
+### Online detection
+- If the server responds on port 445, an ONLINE counter increases
+- All configured shares for that server are mounted (if it was to fail, it will try up to 3 times by default) 
+
+### Offline detection
+- If the server is unreachable, an OFFLINE counter increases
+- All shares are unmounted using lazy unmount (if it was to fail, it will try up to 3 times by default)
+
+After either action completes, the system stops acting until state changes again.
 
 ---
 
@@ -193,7 +147,52 @@ Behavior:
 ```bash
 ./smb-controller-installer.sh -h
 ```
-Just shows -i and -r/-u 
+Just shows a short help with -i and -r/-u 
+
+---
+
+## Configuration
+
+Configuration is defined in:
+
+```
+
+/etc/smb-controller.conf
+
+````
+
+### Structure
+
+- GLOBAL SETTINGS: timing, mount options, base path
+- SERVERS: list of SMB servers with credentials
+- PATHS: mapping of mount points to servers and remote paths
+
+Example:
+
+```bash
+BASEMNT="/srv/M"
+
+CHECK_TIMEOUT=1
+COUNT_MAX=3
+SLEEP=5
+SPAWN_DELAY=0.1
+SERVER_DELAY=0.1
+
+MOUNT_OPTIONS="uid=root,gid=smbmount,file_mode=0770,dir_mode=0770,soft"
+
+SERVERS=(
+  "media-server:192.168.50.10:/etc/samba/media-smb-credentials"
+  "backup-node:192.168.50.11:/etc/samba/backup-smb-credentials"
+)
+
+PATHS=(
+  "mediaHome:${BASEMNT}/mediaHome:/home:media-server"
+  "mediaData:${BASEMNT}/mediaData:/mnt:media-server"
+
+  "backupHome:${BASEMNT}/backupHome:/home:backup-node"
+  "backupData:${BASEMNT}/backupData:/mnt:backup-node"
+)
+```
 
 ---
 
