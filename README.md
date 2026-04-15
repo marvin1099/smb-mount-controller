@@ -89,7 +89,29 @@ PATHS=(
   "backupHome:${BASEMNT}/backupHome:/home:backup-node"
   "backupData:${BASEMNT}/backupData:/mnt:backup-node"
 )
-````
+```
+
+---
+
+## Quick start
+
+To get started quickly, you can run the installer directly:
+
+```bash
+bash <(curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/installer.sh)
+```
+
+This is the fastest way to install, but it is recommended to review the script first if you are unsure what it does.
+
+---
+
+## Alternative (safer manual install)
+
+```bash
+curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/installer.sh -o installer.sh
+chmod +x installer.sh
+./installer.sh
+```
 
 ---
 
@@ -101,28 +123,31 @@ The project includes an interactive installer that supports both guided and non-
 
 Run:
 
-```
+```bash
 ./installer.sh
 ```
 
 This will:
 
-* Offer for you to:
-    * Read the script
-    * Install
-    * Uninstall
-    * Cancel (exit)
-    
-* On Install select it will:
-    * Install the controller script
-    * Offer configuration options (example or empty config)
-    * Open the config in an editor
-    * Optionally install and enable systemd service
+* Offer you options to:
 
-* You can also Uninstall there this is going to:
-    * Stop and disable systemd service (if present)
-    * Remove installed binaries and service files
-    * Keep the config file 
+  * Read the script
+  * Install
+  * Uninstall
+  * Cancel (exit)
+
+* On Install selection:
+
+  * Install the controller script
+  * Offer configuration options (example or empty config)
+  * Open the config in an editor
+  * Optionally install and enable systemd service
+
+* On Uninstall:
+
+  * Stops and disables systemd service (if present)
+  * Removes installed binaries and service files
+  * Keeps the config file
 
 ---
 
@@ -132,7 +157,7 @@ The installer supports flags for automation:
 
 ### Install without prompts
 
-```
+```bash
 ./installer.sh -i
 ```
 
@@ -148,7 +173,7 @@ Behavior:
 
 ### Uninstall mode
 
-```
+```bash
 ./installer.sh -r
 # or
 ./installer.sh -u
@@ -165,10 +190,12 @@ Behavior:
 
 ### Note
 
-```
+```bash
 ./installer.sh -h
 ```
 Just shows -i and -r/-u 
+
+---
 
 ## System requirements
 
