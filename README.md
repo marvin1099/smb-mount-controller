@@ -108,9 +108,9 @@ This is the fastest way to install, but it is recommended to review the script f
 ## Alternative (safer manual install)
 
 ```bash
-curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh -o installer.sh
-chmod +x installer.sh
-./installer.sh
+curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh -o smb-controller-installer.sh
+chmod +x smb-controller-installer.sh
+./smb-controller-installer.sh
 ```
 
 ---
@@ -124,7 +124,7 @@ The project includes an interactive installer that supports both guided and non-
 Run:
 
 ```bash
-./installer.sh
+./smb-controller-installer.sh
 ```
 
 This will:
@@ -158,7 +158,7 @@ The installer supports flags for automation:
 ### Install without prompts
 
 ```bash
-./installer.sh -i
+./smb-controller-installer.sh -i
 ```
 
 Behavior:
@@ -174,9 +174,9 @@ Behavior:
 ### Uninstall mode
 
 ```bash
-./installer.sh -r
+./smb-controller-installer.sh -r
 # or
-./installer.sh -u
+./smb-controller-installer.sh -u
 ```
 
 Behavior:
@@ -191,7 +191,7 @@ Behavior:
 ### Note
 
 ```bash
-./installer.sh -h
+./smb-controller-installer.sh -h
 ```
 Just shows -i and -r/-u 
 
