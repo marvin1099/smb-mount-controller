@@ -32,6 +32,22 @@ This tool replaces traditional automount approaches (such as autofs in desktop e
 
 ---
 
+## How it works
+
+Each server is monitored independently.
+
+### Online detection
+- If the server responds on port 445, an ONLINE counter increases
+- All configured shares for that server are mounted (if it was to fail, it will try up to 3 times by default) 
+
+### Offline detection
+- If the server is unreachable, an OFFLINE counter increases
+- All shares are unmounted using lazy unmount (if it was to fail, it will try up to 3 times by default)
+
+After either action completes, the system stops acting until state changes again.
+
+---
+
 ## Quick start
 
 To get started quickly, you can run the installer directly:
@@ -51,22 +67,6 @@ curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/
 chmod +x smb-controller-installer.sh
 ./smb-controller-installer.sh
 ```
----
-
-## How it works
-
-Each server is monitored independently.
-
-### Online detection
-- If the server responds on port 445, an ONLINE counter increases
-- All configured shares for that server are mounted (if it was to fail, it will try up to 3 times by default) 
-
-### Offline detection
-- If the server is unreachable, an OFFLINE counter increases
-- All shares are unmounted using lazy unmount (if it was to fail, it will try up to 3 times by default)
-
-After either action completes, the system stops acting until state changes again.
-
 ---
 
 ## Installation
