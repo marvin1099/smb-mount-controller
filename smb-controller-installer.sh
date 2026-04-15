@@ -208,11 +208,11 @@ setup_config() {
       ;;
   esac
 
-  sudo_cmd chmod 600 "$CONF_PATH"
+  sudo_cmd chmod 644 "$CONF_PATH"
 
+  echo "Config file placed at: $CONF_PATH"
   if (( install_now )); then
     echo "Config file edit skiped, because of install now"
-    echo "Config file placed at: $CONF_PATH"
   else
     echo "Opening config for editing..."
     sudo_cmd ${EDITOR:-nano} "$CONF_PATH" || ${EDITOR:-nano} "$CONF_PATH"
@@ -263,7 +263,7 @@ setup_systemd() {
     2)
       sudo_cmd systemctl start smb-controller
       ;;
-    5)
+    4)
       echo "Starting controller manually..."
       sudo_cmd "$INSTALL_PATH"
       ;;
