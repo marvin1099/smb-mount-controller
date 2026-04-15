@@ -176,8 +176,8 @@ setup_config() {
   else
     menu_select "Config setup" \
       "Keep old config or copy example config (recommended)" \
-      "Keep old config or create empty config"
-      "Copy example config and override"
+      "Keep old config or create empty config" \
+      "Copy example config and override"\
       "Create empty config"
     selected=$?
   fi
