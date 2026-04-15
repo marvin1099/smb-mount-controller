@@ -17,7 +17,13 @@ TMP_DIR="/tmp/smb-controller-install"
 mkdir -p "$TMP_DIR"
 
 arg="$1"
-if [[ "$arg" == "-i" ]]; then
+if [[ "$arg" == "-h" ]]; then
+  echo "Run without args for interactive un/installer"
+  echo "Run with -i to install no questions asked"
+  echo "Run with -r/-u to uninstall/remove no questions asked"
+  echo "Run with -h for this message then exit"
+  exit 0
+elif [[ "$arg" == "-i" ]]; then
   install_now=1
 elif [[ "$arg" == "-r" ]] || [[ "$arg" == "-u" ]]; then
   remove_now=1
