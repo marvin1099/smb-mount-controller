@@ -1,0 +1,12 @@
+[Unit]
+Description=SMB Mount Controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/smb-controller
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
