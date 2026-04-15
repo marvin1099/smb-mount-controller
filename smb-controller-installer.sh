@@ -16,6 +16,13 @@ TMP_DIR="/tmp/smb-controller-install"
 
 mkdir -p "$TMP_DIR"
 
+arg="$1"
+if [[ "$arg" == "-i" ]]; then
+  install_now=1
+elif [[ "$arg" == "-r" ]] || [[ "$arg" == "-u" ]]; then
+  remove_now=1
+fi
+
 
 # =========================
 # ROOT / SUDO HANDLING
@@ -58,7 +65,11 @@ trap cleanup EXIT INT TERM
 
 unlock_sudo() {
   if (( ! IS_ROOT )); then
-    read -rp "Keep sudo alive during install? (recommended for long installs) (y/N): " keep
+    if (( install_now )) || (( remove_now )); then
+      keep=n
+    else
+      read -rp "Keep sudo alive during install? (recommended for long installs) (y/N): " keep
+    fi
     sudo -v || {
       echo "Can't continue without superuser";
       exit 1
@@ -76,6 +87,9 @@ unlock_sudo() {
 download() {
   local url="$1"
   local out="$2"
+  if [[ -f "$out" ]]; then
+    sudo_cmd rm "$out"
+  fi
 
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL "$url" -o "$out"
@@ -151,43 +165,75 @@ install_script() {
 # CONFIG SETUP
 # =========================
 setup_config() {
-  menu_select "Config setup" \
-    "Copy example config (recommended)" \
-    "Create empty config"
+  if (( install_now )); then
+    selected=0
+  else
+    menu_select "Config setup" \
+      "Keep old config or copy example config (recommended)" \
+      "Keep old config or create empty config"
+      "Copy example config and override"
+      "Create empty config"
+    selected=$?
+  fi
 
-  case $? in
+  case $selected in
     0)
+      if [[ ! -f "$CONF_PATH" ]]; then
+        download "$CONF_URL" "$TMP_DIR/smb-controller.conf" || {
+          echo "Failed to download config"
+          exit 1
+        }
+        sudo_cmd mv "$TMP_DIR/smb-controller.conf" "$CONF_PATH"
+      fi
+      ;;
+    1)
+      sudo_cmd touch "$CONF_PATH"
+      ;;
+    2)
       download "$CONF_URL" "$TMP_DIR/smb-controller.conf" || {
         echo "Failed to download config"
         exit 1
       }
       sudo_cmd mv "$TMP_DIR/smb-controller.conf" "$CONF_PATH"
       ;;
-    1)
+    3)
+      sudo_cmd rm "$CONF_PATH"
       sudo_cmd touch "$CONF_PATH"
       ;;
   esac
 
   sudo_cmd chmod 600 "$CONF_PATH"
 
-  echo
-  echo "Opening config for editing..."
-  sudo_cmd ${EDITOR:-nano} "$CONF_PATH" || ${EDITOR:-nano} "$CONF_PATH"
+  if (( install_now )); then
+    echo "Config file edit skiped, because of install now"
+    echo "Config file placed at: $CONF_PATH"
+  else
+    echo "Opening config for editing..."
+    sudo_cmd ${EDITOR:-nano} "$CONF_PATH" || ${EDITOR:-nano} "$CONF_PATH"
+  fi
 }
 
 # =========================
 # SYSTEMD SETUP
 # =========================
 setup_systemd() {
-  menu_select "Systemd setup (smb-controller.service)" \
-    "Yes, enable and start now" \
-    "Yes, enable only" \
-    "Yes, start only" \
-    "Yes, just install service file" \
-    "No, but run controller now" \
-    "No, end installer"
+  local choice
+  if (( install_now )); then
+    echo "Downloading service file only, because of install now"
+    echo "Enable with: systemctl enable --now smb-controller"
+    choice=3
+  else
+    menu_select "Systemd setup (smb-controller.service)" \
+      "Yes, enable and start now" \
+      "Yes, enable only" \
+      "Yes, start only" \
+      "Yes, just install service file" \
+      "No, but run controller now" \
+      "No, end installer"
+    choice=$?
+  fi
 
-  local choice=$?
+
 
   if (( choice <= 3 )); then
     download "$SERVICE_URL" "$TMP_DIR/smb-controller.service" || {
@@ -196,6 +242,7 @@ setup_systemd() {
     }
 
     sudo_cmd mv "$TMP_DIR/smb-controller.service" "$SERVICE_PATH"
+    echo "Placing service file at $SERVICE_PATH"
     sudo_cmd systemctl daemon-reexec
     sudo_cmd systemctl daemon-reload
   fi
@@ -221,6 +268,11 @@ setup_systemd() {
 # MAIN MENU
 # =========================
 main_menu() {
+  if (( install_now )); then
+    return 0
+  elif (( remove_now )); then
+    do_uninstall
+  fi
   while true; do
     menu_select "SMB Mount Controller Installer" \
       "Read installer script" \
@@ -253,7 +305,9 @@ main() {
   main_menu
   unlock_sudo
   install_script
+  echo
   setup_config
+  echo
   setup_systemd
 
   echo
