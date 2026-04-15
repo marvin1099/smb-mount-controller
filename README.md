@@ -98,7 +98,7 @@ PATHS=(
 To get started quickly, you can run the installer directly:
 
 ```bash
-bash <(curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/installer.sh)
+bash <(curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh)
 ```
 
 This is the fastest way to install, but it is recommended to review the script first if you are unsure what it does.
@@ -108,7 +108,7 @@ This is the fastest way to install, but it is recommended to review the script f
 ## Alternative (safer manual install)
 
 ```bash
-curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/installer.sh -o installer.sh
+curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh -o installer.sh
 chmod +x installer.sh
 ./installer.sh
 ```
