@@ -102,7 +102,7 @@ This will:
 
   * Install the controller script
   * Offer configuration options (example or empty config)
-  * Open the config in an editor
+  * Open the config in an editor (can be disabled with -c flag)
   * Optionally install and enable systemd service
 
 * On Uninstall:
