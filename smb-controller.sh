@@ -14,7 +14,6 @@ source "$CONFIG_FILE"
 # =========================
 # VALIDATION
 # =========================
-[[ -z "$BASEMNT" ]] && echo "ERROR: BASEMNT not set" && exit 1
 [[ -z "$MOUNT_OPTIONS" ]] && echo "ERROR: MOUNT_OPTIONS not set" && exit 1
 [[ ${#SERVERS[@]} -eq 0 ]] && echo "ERROR: SERVERS empty" && exit 1
 [[ ${#PATHS[@]} -eq 0 ]] && echo "ERROR: PATHS empty" && exit 1

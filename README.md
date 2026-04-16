@@ -244,6 +244,7 @@ Example (also in example-smb-controller.conf):
 # =========================
 
 # Base directory for all mount points (use absolute path)
+# This is only used in the config, so can be replaced if need be
 BASEMNT="/srv/M"
 
 # Timeout in seconds for each port check (server reachability test)
