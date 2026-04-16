@@ -50,22 +50,26 @@ After either action completes, the system stops acting until state changes again
 
 ## Quick start
 
-To get started quickly, you can run the installer directly:
+Paste the following in a terminal and press enter
 
 ```bash
-bash <(curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh)
-```
+bash -c '
+curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh -o smb-controller-installer.sh \
+|| { echo "Download failed"; exit 1; }
+chmod +x smb-controller-installer.sh || { echo "chmod failed"; exit 1; }
+echo "Downloaded to $(realpath smb-controller-installer.sh)"
 
-This is the fastest way to install, but it is recommended to review the script first if you are unsure what it does.
+IFS= read -rp "Read installer? (y/n) " ans; ans=${ans,,}
+[[ "$ans" == y* ]] && less smb-controller-installer.sh
+IFS= read -rp "Keep installer on exit? (y/n) " anw; anw=${anw,,}
+IFS= read -rp "Run installer? (y/n) " ans; ans=${ans,,}
+[[ "$ans" == y* ]] && ./smb-controller-installer.sh || NO=1
 
----
+[[ "$anw" == y* ]] && echo "Keeping installer" \
+|| { rm ./smb-controller-installer.sh && echo "Removed installer" || echo "Failed to remove installer"; }
+[[ -n "$NO" ]] && { echo "Cancelled"; exit 1; } || echo "Installer ran successfully"
+'
 
-## Alternative (safer manual install)
-
-```bash
-curl -fsSL https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main/smb-controller-installer.sh -o smb-controller-installer.sh
-chmod +x smb-controller-installer.sh
-./smb-controller-installer.sh
 ```
 ---
 
@@ -125,6 +129,46 @@ Behavior:
 
 ---
 
+### Install with local files
+
+```bash
+./smb-controller-installer.sh -i -l
+```
+
+Use `-l` to use files from the script's directory instead of downloading. Useful for offline installation or custom builds.
+
+---
+
+### Install without systemd
+
+```bash
+./smb-controller-installer.sh -i -n
+```
+
+Use `-n` to skip systemd service file creation. Useful for systems without systemd or custom setups.
+
+---
+
+### Install with config editing
+
+```bash
+./smb-controller-installer.sh -i -c
+```
+
+Use `-c` to open the config file in an editor during non-interactive install. In interactive mode, this option disables the automatic config editor prompt.
+
+---
+
+### Install with systemd activation
+
+```bash
+./smb-controller-installer.sh -i -a
+```
+
+Use `-a` to enable and start the systemd service immediately (requires `-i` without `-n`).
+
+---
+
 ### Uninstall mode
 
 ```bash
@@ -138,16 +182,37 @@ Behavior:
 * Stops and disables systemd service (if present)
 * Removes installed binaries and service files
 * Does not prompt for confirmation
-* Keeps config file 
+* Keeps config file
 
 ---
 
-### Note
+### Uninstall without systemd
+
+```bash
+./smb-controller-installer.sh -r -n
+```
+
+Use `-n` to skip systemd service removal.
+
+---
+
+### View script before installing
+
+```bash
+./smb-controller-installer.sh -i -s
+```
+
+Use `-s` to view the script with `less` before proceeding.
+
+---
+
+### Help
 
 ```bash
 ./smb-controller-installer.sh -h
 ```
-Just shows a short help with -i and -r/-u 
+
+Shows full help with all available options and examples.
 
 ---
 

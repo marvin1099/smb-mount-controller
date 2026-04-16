@@ -2,6 +2,8 @@
 
 set +e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 REPO_BASE="https://codeberg.org/marvin1099/smb-mount-controller/raw/branch/main"
 
 SCRIPT_URL="$REPO_BASE/smb-controller.sh"
@@ -16,18 +18,89 @@ TMP_DIR="/tmp/smb-controller-install"
 
 mkdir -p "$TMP_DIR"
 
-arg="$1"
-if [[ "$arg" == "-h" ]]; then
-  echo "Run without args for interactive un/installer"
-  echo "Run with -i to install no questions asked"
-  echo "Run with -r/-u to uninstall/remove no questions asked"
-  echo "Run with -h for this message then exit"
+INSTALL_NOW=0
+REMOVE_NOW=0
+LOCAL_MODE=0
+NO_SYSTEMD=0
+READ_SCRIPT=0
+SYSTEMD_ACTIVATE=0
+CONFIG_EDIT=0
+
+show_help() {
+  cat << EOF
+SMB Mount Controller Installer
+
+Usage: $(basename "$0") [OPTIONS]
+
+OPTIONS:
+  -h          Show this help message and exit
+  -k          To run interactive installer
+              (or run without arguments)
+  -i          Install non-interactively
+  -r, -u      Uninstall non-interactively
+  -l          Local mode: use files from script directory instead of downloading
+              (use with -i or via interactive installer to install from local files)
+  -n          No systemd: skip systemd service file creation/deletion
+              (use with -i or -r/-u)
+  -s          To read the script before installing
+              (uses command less, use with -i or -r/-u)
+  -a          To activate and start the systemd service
+              (use with -i and without -n)
+  -c          To edit the config in non interactive mode
+              (use with -i, disables opening the config in interactive mode)
+
+EXAMPLES:
+  $(basename "$0")           # Interactive installer
+  $(basename "$0") -i        # Install non-interactively
+  $(basename "$0") -i -l     # Install using local files
+  $(basename "$0") -i -n     # Install without systemd service
+  $(basename "$0") -i -a     # Install and enable systemd service
+  $(basename "$0") -i -c     # Install and edit config
+  $(basename "$0") -i -l -n  # Local install without systemd
+  $(basename "$0") -i -l -a  # Local install with systemd activation
+  $(basename "$0") -r        # Uninstall
+  $(basename "$0") -r -n     # Uninstall without systemd
+  $(basename "$0") -u        # Uninstall (alias)
+
+EOF
   exit 0
-elif [[ "$arg" == "-i" ]]; then
-  install_now=1
-elif [[ "$arg" == "-r" ]] || [[ "$arg" == "-u" ]]; then
-  remove_now=1
-fi
+}
+
+while getopts "hirulnsakc" opt; do
+  case "$opt" in
+    h)
+      show_help
+      ;;
+    i)
+      INSTALL_NOW=1
+      ;;
+    r|u)
+      REMOVE_NOW=1
+      ;;
+    l)
+      LOCAL_MODE=1
+      ;;
+    n)
+      NO_SYSTEMD=1
+      ;;
+    s)
+      READ_SCRIPT=1
+      ;;
+    a)
+      SYSTEMD_ACTIVATE=1
+      ;;
+    c)
+      CONFIG_EDIT=1
+      ;;
+    k)
+      : # -k is the same as no argument so just shallow it
+      ;;
+    \?)
+      echo "Use -h for help"
+      exit 1
+      ;;
+  esac
+done
 
 
 # =========================
@@ -71,7 +144,7 @@ trap cleanup EXIT INT TERM
 
 unlock_sudo() {
   if (( ! IS_ROOT )); then
-    if (( install_now )) || (( remove_now )); then
+    if (( INSTALL_NOW )) || (( REMOVE_NOW )); then
       keep=n
     else
       read -rp "Keep sudo alive during install? (recommended for long installs) (y/N): " keep
@@ -95,6 +168,18 @@ download() {
   local out="$2"
   if [[ -f "$out" ]]; then
     sudo_cmd rm "$out"
+  fi
+
+  if (( LOCAL_MODE )); then
+    local filename
+    filename=$(basename "$url")
+    if [[ -f "$SCRIPT_DIR/$filename" ]]; then
+      cp "$SCRIPT_DIR/$filename" "$out"
+      return 0
+    else
+      echo "ERROR: Local file $SCRIPT_DIR/$filename not found"
+      return 1
+    fi
   fi
 
   if command -v curl >/dev/null 2>&1; then
@@ -142,11 +227,15 @@ do_uninstall() {
   echo "Uninstalling..."
   unlock_sudo
 
-  sudo_cmd systemctl stop smb-controller 2>/dev/null
-  sudo_cmd systemctl disable smb-controller 2>/dev/null
+  if (( ! NO_SYSTEMD )); then
+    sudo_cmd systemctl stop smb-controller 2>/dev/null
+    sudo_cmd systemctl disable smb-controller 2>/dev/null
+    sudo_cmd rm -f "$SERVICE_PATH"
+  else
+    echo "Skipping systemd service removal, because of no systemd"
+  fi
 
   sudo_cmd rm -f "$INSTALL_PATH"
-  sudo_cmd rm -f "$SERVICE_PATH"
 
   echo "Done."
   exit 0
@@ -159,7 +248,7 @@ install_script() {
   echo "Downloading controller..."
 
   download "$SCRIPT_URL" "$TMP_DIR/smb-controller.sh" || {
-    echo "Failed to download script"
+    echo "Failed to grab script"
     exit 1
   }
 
@@ -171,7 +260,7 @@ install_script() {
 # CONFIG SETUP
 # =========================
 setup_config() {
-  if (( install_now )); then
+  if (( INSTALL_NOW )); then
     selected=0
   else
     menu_select "Config setup" \
@@ -186,7 +275,7 @@ setup_config() {
     0)
       if [[ ! -f "$CONF_PATH" ]]; then
         download "$CONF_URL" "$TMP_DIR/smb-controller.conf" || {
-          echo "Failed to download config"
+          echo "Failed to grab config"
           exit 1
         }
         sudo_cmd mv "$TMP_DIR/smb-controller.conf" "$CONF_PATH"
@@ -197,7 +286,7 @@ setup_config() {
       ;;
     2)
       download "$CONF_URL" "$TMP_DIR/smb-controller.conf" || {
-        echo "Failed to download config"
+        echo "Failed to grab config"
         exit 1
       }
       sudo_cmd mv "$TMP_DIR/smb-controller.conf" "$CONF_PATH"
@@ -211,23 +300,36 @@ setup_config() {
   sudo_cmd chmod 644 "$CONF_PATH"
 
   echo "Config file placed at: $CONF_PATH"
-  if (( install_now )); then
-    echo "Config file edit skiped, because of install now"
-  else
-    echo "Opening config for editing..."
-    sudo_cmd ${EDITOR:-nano} "$CONF_PATH" || ${EDITOR:-nano} "$CONF_PATH"
+  if (( INSTALL_NOW )) && ! (( CONFIG_EDIT )); then
+    echo "Config file edit skipped, because of install now"
+    return 0
+  elif (( CONFIG_EDIT )) && ! (( INSTALL_NOW )); then
+    echo "Config file edit skipped, because of config edit in interactive mode"
+    return 0
   fi
+  echo "Opening config for editing..."
+  sudo_cmd ${EDITOR:-nano} "$CONF_PATH" || ${EDITOR:-nano} "$CONF_PATH"
 }
 
 # =========================
 # SYSTEMD SETUP
 # =========================
 setup_systemd() {
+  if (( NO_SYSTEMD )); then
+    echo "Skipping systemd service setup, because of no systemd"
+    return 0
+  fi
+
   local choice
-  if (( install_now )); then
-    echo "Downloading service file only, because of install now"
-    echo "Enable with: systemctl enable --now smb-controller"
-    choice=3
+  if (( INSTALL_NOW )); then
+    if (( SYSTEMD_ACTIVATE )); then
+      echo "Enabling systemd now, because of systemd activate"
+      choice=1
+    else
+      echo "Downloading service file only, because of install now"
+      echo "Enable with: systemctl enable --now smb-controller"
+      choice=3
+    fi
   else
     menu_select "Systemd setup (smb-controller.service)" \
       "Yes, enable and start now" \
@@ -243,7 +345,7 @@ setup_systemd() {
 
   if (( choice <= 3 )); then
     download "$SERVICE_URL" "$TMP_DIR/smb-controller.service" || {
-      echo "Failed to download service"
+      echo "Failed to grab service"
       exit 1
     }
 
@@ -274,9 +376,15 @@ setup_systemd() {
 # MAIN MENU
 # =========================
 main_menu() {
-  if (( install_now )); then
+  if (( INSTALL_NOW )); then
+    if (( READ_SCRIPT )); then
+      less "$0"
+    fi
     return 0
-  elif (( remove_now )); then
+  elif (( REMOVE_NOW )); then
+    if (( READ_SCRIPT )); then
+      less "$0"
+    fi
     do_uninstall
   fi
   while true; do
