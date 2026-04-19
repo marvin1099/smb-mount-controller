@@ -77,7 +77,29 @@ IFS= read -rp "Run installer? (y/n) " ans; ans=${ans,,}
 ```
 ---
 
-## Installation
+### AUR installation (Arch Linux)
+
+As alternative to quick start the project is available in the AUR:
+
+```bash
+yay -S smb-mount-controller-git
+```
+
+or
+
+```bash
+paru -S smb-mount-controller-git
+```
+
+This will install behave like:
+```bash
+./smb-controller-installer.sh -i
+```
+You still need to edit the config manually, so it works on your system
+
+---
+
+## Installation (Other Sytems)
 
 The project includes an interactive installer that supports both guided and non-interactive modes.
 
@@ -129,7 +151,7 @@ Behavior:
 * Downloads systemd service automatically (no activation or start)
 * Uses existing config if present, otherwise installs default
 * Skips all prompts
-* Does not open editor
+* Does not open editor (you still need to edit manually, so it works on your system)
 
 ---
 
@@ -230,6 +252,8 @@ Configuration is defined in:
 
 ```
 
+Config edit is needed, as the config will likely never match your setup.
+
 ### Structure
 
 - GLOBAL SETTINGS: timing, mount options, base path
@@ -242,6 +266,8 @@ Example (also in example-smb-controller.conf):
 # =========================
 # GLOBAL SETTINGS
 # =========================
+
+# smb-mount-controller config v1
 
 # Base directory for all mount points (use absolute path)
 # This is only used in the config, so can be replaced if need be

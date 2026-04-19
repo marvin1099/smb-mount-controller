@@ -10,9 +10,9 @@ SCRIPT_URL="$REPO_BASE/smb-controller.sh"
 CONF_URL="$REPO_BASE/example-smb-controller.conf"
 SERVICE_URL="$REPO_BASE/default-smb-controller.service"
 
-INSTALL_PATH="/usr/local/bin/smb-controller"
+INSTALL_PATH="/usr/bin/smb-controller"
 CONF_PATH="/etc/smb-controller.conf"
-SERVICE_PATH="/etc/systemd/system/smb-controller.service"
+SERVICE_PATH="/usr/lib/systemd/system/smb-controller.service"
 
 TMP_DIR="/tmp/smb-controller-install"
 
