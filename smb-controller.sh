@@ -22,7 +22,7 @@ source "$CONFIG_FILE"
 # VALIDATION WITH DEFAULTS
 # =========================
 [[ -z "$SPAWN_DELAY" ]] && SPAWN_DELAY=0.1
-[[ -z "$SERVER_DELAY" ]] && SERVER_DELAY=0.1
+[[ -z "$SERVER_DELAY" ]] && SERVER_DELAY=0.11
 [[ -z "$COUNT_MAX" ]] && COUNT_MAX=3
 [[ -z "$SLEEP" ]] && SLEEP=5
 [[ -z "$CHECK_TIMEOUT" ]] && CHECK_TIMEOUT=1
@@ -66,11 +66,21 @@ handle_mounts() {
 
       mkdir -p "$mnt"
 
+      OPTS="$MOUNT_OPTIONS"
+
+      if [[ -n "$CREDS" ]]; then
+        if [[ -n "$OPTS" ]]; then
+          OPTS="$OPTS,credentials=$CREDS"
+        else
+          OPTS="credentials=$CREDS"
+        fi
+      fi
+
       if ! findmnt -rno TARGET "$mnt" >/dev/null 2>&1; then
         echo "[SMB-$NAME] Mounting $label"
 
         if mount -t cifs "//$IP$remote" "$mnt" \
-          -o "$MOUNT_OPTIONS,credentials=$CREDS"; then
+          -o "$OPTS"; then
           echo "[SMB-$NAME] SUCCESS: $mnt"
         else
           echo "[SMB-$NAME] FAILED: $mnt"
