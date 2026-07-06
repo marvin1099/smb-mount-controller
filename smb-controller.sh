@@ -76,15 +76,20 @@ handle_mounts() {
         fi
       fi
 
-      if ! findmnt -rno TARGET "$mnt" >/dev/null 2>&1; then
-        echo "[SMB-$NAME] Mounting $label"
-
-        if mount -t cifs "//$IP$remote" "$mnt" \
-          -o "$OPTS"; then
-          echo "[SMB-$NAME] SUCCESS: $mnt"
-        else
-          echo "[SMB-$NAME] FAILED: $mnt"
+      if findmnt -rno TARGET "$mnt" >/dev/null 2>&1; then
+        if timeout 2 stat -t "$mnt" >/dev/null 2>&1; then
+          exit 0
         fi
+        echo "[SMB-$NAME] Stale mount detected: $label, remounting"
+        umount -l "$mnt" 2>/dev/null
+      fi
+
+      echo "[SMB-$NAME] Mounting $label"
+      if mount -t cifs "//$IP$remote" "$mnt" \
+        -o "$OPTS"; then
+        echo "[SMB-$NAME] SUCCESS: $mnt"
+      else
+        echo "[SMB-$NAME] FAILED: $mnt"
       fi
     ) &
     sleep "$SPAWN_DELAY"
